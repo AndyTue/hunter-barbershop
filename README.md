@@ -16,6 +16,6 @@ npm run build
 ```
 
 ## Notas
-- Todo el UI vive en `src/main.tsx` con CSS global en `src/index.css`.
-- Los assets de fotografía son placeholders de Unsplash y están centralizados al inicio del archivo.
-- La dirección, redes, WhatsApp y reseñas son datos de demostración listos para sustituirse.
+- La UI está dividida en `src/components`, los datos editables (servicios, reseñas, galería, contacto) en `src/data` y los hooks de scroll/splash en `src/hooks`.
+- La galería (`src/data/gallery.ts`) todavía usa fotos de Unsplash como placeholder.
+- WhatsApp, redes, mapa y enlace de reseñas se configuran en `src/data/site.ts`.
