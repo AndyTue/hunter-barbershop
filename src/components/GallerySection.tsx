@@ -4,10 +4,10 @@ import { GALLERY, GALLERY_VIDEO } from '../data/gallery';
 
 // Masonry columns: each column stacks photos (index into GALLERY, flex weight) at different heights.
 const COLUMNS: { photos: [number, number][]; width: string }[] = [
-  { photos: [[0, 3], [1, 2]], width: 'w-[240px] md:w-[300px]' },
-  { photos: [[2, 2], [3, 3]], width: 'w-[240px] md:w-[300px]' },
-  { photos: [[4, 3], [5, 2]], width: 'w-[240px] md:w-[300px]' },
-  { photos: [[6, 2], [7, 3]], width: 'w-[240px] md:w-[300px]' }
+  { photos: [[0, 2.5], [1, 2]], width: 'w-[280px] md:w-[360px]' },
+  { photos: [[2, 4.5], [3, 1.8]], width: 'w-[280px] md:w-[360px]' },
+  { photos: [[4, 2.5], [5, 2]], width: 'w-[280px] md:w-[360px]' },
+  { photos: [[6, 2], [7, 2.5]], width: 'w-[280px] md:w-[360px]' }
 ];
 
 export function GallerySection() {
@@ -40,7 +40,7 @@ export function GallerySection() {
 
   const pause = () => { paused.current = true; };
   const resume = () => { paused.current = false; };
-  const H = 'h-[460px] md:h-[min(78vh,680px)]';
+  const H = 'h-[520px] md:h-[min(85vh,820px)]';
 
   return (
     <section id="galeria" className="w-full py-20 px-4 md:px-8 bg-[#111111]">
