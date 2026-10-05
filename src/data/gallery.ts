@@ -1,4 +1,3 @@
-import fade from '../../images/fade.jpeg';
 import fade2 from '../../images/fade2.jpeg';
 import fade3 from '../../images/fade 3.jpeg';
 import fadeBarba from '../../images/fade y barba.jpeg';
@@ -11,7 +10,6 @@ import trenzas from '../../images/trenzas.jpeg';
 export { default as GALLERY_VIDEO } from '../../images/video corte fade .mp4';
 
 export const GALLERY = [
-  [fade, 'Fade clásico'],
   [fadeBarba, 'Fade y barba'],
   [fade3, 'Fade con textura'],
   [antesDespues, 'Antes y después'],

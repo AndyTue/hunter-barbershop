@@ -1,20 +1,36 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { GOOGLE_RATING, REVIEW_URL } from '../data/site';
 import { REVIEWS } from '../data/reviews';
 import { relativeTime } from '../lib/format';
 import { CountUp } from './CountUp';
 import { Icon, StarRow } from './Icon';
 
-const PAGE_SIZE = 3;
-const PAGE_COUNT = Math.ceil(REVIEWS.length / PAGE_SIZE);
 
 export function ReviewsSection() {
-  const [page, setPage] = useState(0);
+  const track = useRef<HTMLDivElement>(null);
+  const paused = useRef(false);
+
+  const go = (dir: 1 | -1) => {
+    const el = track.current;
+    if (!el) return;
+    const cards = Array.from(el.children) as HTMLElement[];
+    const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 8;
+    if (dir === 1) {
+      if (atEnd) return el.scrollTo({ left: 0, behavior: 'smooth' });
+      const next = cards.find(c => c.offsetLeft > el.scrollLeft + 8);
+      el.scrollTo({ left: next ? next.offsetLeft : el.scrollWidth, behavior: 'smooth' });
+    } else {
+      if (el.scrollLeft <= 8) return el.scrollTo({ left: el.scrollWidth, behavior: 'smooth' });
+      const prev = [...cards].reverse().find(c => c.offsetLeft < el.scrollLeft - 8);
+      el.scrollTo({ left: prev ? prev.offsetLeft : 0, behavior: 'smooth' });
+    }
+  };
 
   useEffect(() => {
-    const id = setInterval(() => setPage(p => (p + 1) % PAGE_COUNT), 4000);
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const id = setInterval(() => { if (!paused.current) go(1); }, 4000);
     return () => clearInterval(id);
-  }, [page]);
+  }, []);
 
   return (
     <section id="resenas" className="w-full py-20 px-4 md:px-8 bg-[#151515]">
@@ -36,10 +52,10 @@ export function ReviewsSection() {
             </a>
           </div>
         </div>
-        <div className="relative overflow-hidden">
-          <div className="flex gap-4 transition-transform duration-500 ease-in-out" style={{ transform: `translateX(calc(-${page * (100 / 3)}% - ${page * (16 / 3)}px))` }}>
+        <div className="relative" onMouseEnter={() => { paused.current = true; }} onMouseLeave={() => { paused.current = false; }} onTouchStart={() => { paused.current = true; }} onTouchEnd={() => { paused.current = false; }}>
+          <div ref={track} className="flex gap-4 overflow-x-auto snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {REVIEWS.map(r => (
-              <article key={r.author} className="bg-[#111111] border border-[#C0C0C0]/15 rounded-2xl p-6 shadow-xl flex-shrink-0 w-[calc(33.333%-11px)]" style={{ minWidth: '280px' }}>
+              <article key={r.author} className="bg-[#111111] border border-[#C0C0C0]/15 rounded-2xl p-6 shadow-xl shrink-0 snap-start w-[85%] sm:w-[calc(50%-8px)] lg:w-[calc(33.333%-11px)]">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-11 h-11 rounded-full bg-[#FED700]/15 text-[#FED700] flex items-center justify-center font-bold flex-shrink-0">{r.author.charAt(0)}</div>
@@ -57,13 +73,8 @@ export function ReviewsSection() {
           </div>
         </div>
         <div className="mt-6 flex items-center gap-3">
-          <button type="button" aria-label="Ver reseñas anteriores" onClick={() => setPage(p => (p - 1 + PAGE_COUNT) % PAGE_COUNT)} className="w-10 h-10 rounded-full border border-[#C0C0C0]/20 text-[#FED700] hover:border-[#FED700] transition-colors flex items-center justify-center rotate-180"><Icon name="arrow" size={17} /></button>
-          <button type="button" aria-label="Ver más reseñas" onClick={() => setPage(p => (p + 1) % PAGE_COUNT)} className="w-10 h-10 rounded-full border border-[#C0C0C0]/20 text-[#FED700] hover:border-[#FED700] transition-colors flex items-center justify-center"><Icon name="arrow" size={17} /></button>
-          <div className="flex items-center gap-1.5 ml-2">
-            {Array.from({ length: PAGE_COUNT }).map((_, i) => (
-              <button key={i} type="button" aria-label={`Ir a la página ${i + 1} de reseñas`} onClick={() => setPage(i)} className={`rounded-full transition-all ${page === i ? 'w-5 h-2 bg-[#FED700]' : 'w-2 h-2 bg-[#C0C0C0]/30 hover:bg-[#FED700]/50'}`} />
-            ))}
-          </div>
+          <button type="button" aria-label="Ver reseñas anteriores" onClick={() => go(-1)} className="w-10 h-10 rounded-full border border-[#C0C0C0]/20 text-[#FED700] hover:border-[#FED700] transition-colors flex items-center justify-center rotate-180"><Icon name="arrow" size={17} /></button>
+          <button type="button" aria-label="Ver más reseñas" onClick={() => go(1)} className="w-10 h-10 rounded-full border border-[#C0C0C0]/20 text-[#FED700] hover:border-[#FED700] transition-colors flex items-center justify-center"><Icon name="arrow" size={17} /></button>
         </div>
       </div>
     </section>

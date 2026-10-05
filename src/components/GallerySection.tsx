@@ -7,8 +7,7 @@ const COLUMNS: { photos: [number, number][]; width: string }[] = [
   { photos: [[0, 3], [1, 2]], width: 'w-[240px] md:w-[300px]' },
   { photos: [[2, 2], [3, 3]], width: 'w-[240px] md:w-[300px]' },
   { photos: [[4, 3], [5, 2]], width: 'w-[240px] md:w-[300px]' },
-  { photos: [[6, 2], [7, 3]], width: 'w-[240px] md:w-[300px]' },
-  { photos: [[8, 1]], width: 'w-[240px] md:w-[300px]' }
+  { photos: [[6, 2], [7, 3]], width: 'w-[240px] md:w-[300px]' }
 ];
 
 export function GallerySection() {
@@ -48,8 +47,8 @@ export function GallerySection() {
       <div className="max-w-7xl mx-auto">
         <div className="reveal mb-10 flex items-end justify-between gap-4">
           <div>
-            <div className="text-xs uppercase tracking-widest text-[#FED700] font-bold">Photo showcase</div>
-            <h2 className="mt-2 text-3xl md:text-5xl font-sauce-bold">El taller, de cerca</h2>
+            <div className="text-xs uppercase tracking-widest text-[#FED700] font-bold">Galería</div>
+            <h2 className="mt-2 text-3xl md:text-5xl font-sauce-bold">Nuestro trabajo</h2>
           </div>
           <div className="flex gap-2">
             <button onClick={() => go(-1)} aria-label="Anterior" className="w-10 h-10 rounded-full border border-white/20 hover:border-[#FED700] hover:text-[#FED700] transition-colors">‹</button>
@@ -68,7 +67,7 @@ export function GallerySection() {
           <div className={`relative shrink-0 snap-start h-full aspect-[9/16] overflow-hidden rounded-2xl border border-[#C0C0C0]/10 bg-black`}>
             <video
               src={GALLERY_VIDEO}
-              poster={GALLERY[0][0]}
+              poster={GALLERY[4][0]}
               autoPlay
               muted
               loop
@@ -77,11 +76,6 @@ export function GallerySection() {
               aria-label="Video de un corte fade en Hunter Barbershop"
               className="absolute inset-0 w-full h-full object-cover"
             />
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 p-4 md:p-6">
-              <div className="text-[10px] uppercase tracking-widest text-[#FED700]">Hunter / En vivo</div>
-              <div className="mt-1 text-lg md:text-2xl font-sauce-bold text-white">Así se hace un fade</div>
-            </div>
           </div>
 
           {COLUMNS.map(({ photos, width }, c) => (
@@ -94,8 +88,6 @@ export function GallerySection() {
                   className="group relative min-h-0 overflow-hidden rounded-2xl border border-[#C0C0C0]/10 text-left"
                 >
                   <img src={GALLERY[i][0]} alt={GALLERY[i][1]} loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-                  <div className="absolute inset-x-0 bottom-0 p-3 font-bold text-white text-sm">{GALLERY[i][1]}</div>
                 </button>
               ))}
             </div>
@@ -107,9 +99,8 @@ export function GallerySection() {
         <div className="fixed inset-0 z-[80] bg-black/90 flex items-center justify-center p-4" onClick={() => setOpen(null)}>
           <div className="relative max-w-3xl w-full" onClick={e => e.stopPropagation()}>
             <img src={GALLERY[open][0]} alt={GALLERY[open][1]} className="max-h-[80vh] w-full object-contain rounded-2xl" />
-            <div className="mt-3 flex items-center justify-between">
-              <div className="font-bold">{GALLERY[open][1]}</div>
-              <button onClick={() => setOpen(null)} className="px-4 py-2 rounded-full border border-white/20 text-xs">Cerrar</button>
+            <div className="mt-3 flex items-center">
+              <button onClick={() => setOpen(null)} className="ml-auto px-4 py-2 rounded-full border border-white/20 text-xs">Cerrar</button>
             </div>
           </div>
         </div>
