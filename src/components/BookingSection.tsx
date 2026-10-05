@@ -42,6 +42,7 @@ export function BookingSection({services,onClose}:{services:Service[];onClose:()
   const [calendarMonth,setCalendarMonth]=useState(()=>new Date(now.getFullYear(),now.getMonth(),1,12));
   const dialogRef=useRef<HTMLDivElement>(null);
   const bodyRef=useRef<HTMLDivElement>(null);
+  const [moreBelow,setMoreBelow]=useState(false);
   const onCloseRef=useRef(onClose);
   onCloseRef.current=onClose;
 
@@ -97,6 +98,27 @@ export function BookingSection({services,onClose}:{services:Service[];onClose:()
       previous?.focus?.();
     };
   },[]);
+
+  useEffect(()=>{
+    const el=bodyRef.current;
+    if(!el) return;
+    const update=()=>setMoreBelow(el.scrollTop+el.clientHeight<el.scrollHeight-24);
+    update();
+    el.addEventListener('scroll',update,{passive:true});
+    const observer=new ResizeObserver(update);
+    observer.observe(el);
+    if(el.firstElementChild) observer.observe(el.firstElementChild);
+    return ()=>{el.removeEventListener('scroll',update);observer.disconnect();};
+  },[step,sent,date,calendarMonth]);
+
+  useEffect(()=>{
+    if(!date||window.innerWidth>=768) return;
+    const id=requestAnimationFrame(()=>document.getElementById('bk-time')?.scrollIntoView({block:'start',behavior:'smooth'}));
+    return ()=>cancelAnimationFrame(id);
+  },[date]);
+
+  const scrollDown=()=>bodyRef.current?.scrollBy({top:bodyRef.current.clientHeight*0.7,behavior:'smooth'});
+  const moreLabel=step===0?'Ver más servicios':step===1?(date?'Ver más horarios':'Ver horarios'):'Ver más';
 
   const toggleService=(id:string)=>setSelectedIds(current=>current.includes(id)?current.filter(item=>item!==id):[...current,id]);
 
@@ -158,19 +180,19 @@ export function BookingSection({services,onClose}:{services:Service[];onClose:()
   const fieldError=(field:Field)=>showError(field)?<p id={`bk-${field}-err`} role="alert" className="mt-2 text-xs text-[#ff9a5c]">{errors[field]}</p>:null;
   const isLast=step===STEPS.length-1;
 
-  return <div id="agendar" className="modal-fade fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-3 sm:p-4" onClick={onClose}>
-    <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="bk-title" tabIndex={-1} className="modal-pop flex max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl border border-[#FED700]/30 bg-[#111111] shadow-2xl outline-none" onClick={event=>event.stopPropagation()}>
+  return <div id="agendar" className="modal-fade fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-0 sm:p-4" onClick={onClose}>
+    <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="bk-title" tabIndex={-1} className="modal-pop flex h-dvh max-h-dvh w-full max-w-5xl flex-col overflow-hidden border-0 sm:h-auto sm:max-h-[94vh] sm:rounded-3xl sm:border border-[#FED700]/30 bg-[#111111] shadow-2xl outline-none" onClick={event=>event.stopPropagation()}>
 
-      <header className="shrink-0 border-b border-white/10 px-5 pb-5 pt-5 md:px-8 md:pt-7">
+      <header className="shrink-0 border-b border-white/10 px-4 pb-3 pt-4 sm:px-5 sm:pb-5 sm:pt-5 md:px-8 md:pt-7">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <div className="text-xs font-bold uppercase tracking-widest text-[#FED700]">Reserva tu espacio</div>
-            <h2 id="bk-title" className="mt-1 text-2xl font-sauce-bold md:text-4xl">Agenda tu cita</h2>
+            <div className="hidden text-xs font-bold uppercase tracking-widest text-[#FED700] sm:block">Reserva tu espacio</div>
+            <h2 id="bk-title" className="text-xl font-sauce-bold sm:mt-1 sm:text-2xl md:text-4xl">Agenda tu cita</h2>
           </div>
           <button type="button" aria-label="Cerrar agendamiento" onClick={onClose} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#C0C0C0]/20 text-white transition-colors hover:border-[#FED700] hover:text-[#FED700]"><Icon name="x" size={20}/></button>
         </div>
         {!sent&&<>
-          <ol className="mt-5 flex items-center gap-2 sm:gap-3" aria-label="Pasos de la reserva">
+          <ol className="mt-5 hidden items-center sm:flex gap-2 sm:gap-3" aria-label="Pasos de la reserva">
             {STEPS.map((label,i)=>{
               const done=i<step;
               const active=i===step;
@@ -185,11 +207,13 @@ export function BookingSection({services,onClose}:{services:Service[];onClose:()
               </React.Fragment>;
             })}
           </ol>
-          <p className="mt-3 text-xs uppercase tracking-widest text-[#FED700] sm:hidden">Paso {step+1} de {STEPS.length} · {STEPS[step]}</p>
+          <div className="mt-3 flex gap-1.5 sm:hidden" aria-hidden="true">{STEPS.map((label,i)=><span key={label} className={`h-1 flex-1 rounded-full transition-colors duration-500 ${i<=step?'bg-[#FED700]':'bg-white/15'}`}/>)}</div>
+          <p className="mt-2 text-xs font-bold uppercase tracking-widest text-[#FED700] sm:hidden">Paso {step+1} de {STEPS.length} · {STEPS[step]}</p>
         </>}
       </header>
 
-      <div ref={bodyRef} className="min-h-0 flex-1 overflow-y-auto px-5 py-6 md:px-8 md:py-8">
+      <div className="relative flex min-h-0 flex-1 flex-col">
+      <div ref={bodyRef} className="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-5 sm:py-6 md:px-8 md:py-8">
         {sent?<div className="step-in mx-auto flex max-w-lg flex-col items-center py-4 text-center">
           <div className="success-badge success-check flex h-20 w-20 items-center justify-center rounded-full bg-[#FED700] text-[#111111] shadow-[0_0_40px_rgba(254,215,0,.35)]">
             <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>
@@ -211,11 +235,11 @@ export function BookingSection({services,onClose}:{services:Service[];onClose:()
         :<div key={step} className="step-in">
           {step===0&&<div id="bk-services" aria-describedby="bk-services-err">
             <h3 className="text-lg font-bold">¿Qué servicios necesitas?</h3>
-            <p className="mt-1 text-sm text-[#C0C0C0]">Puedes elegir más de uno.</p>
-            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <p className="mt-1 text-sm text-[#C0C0C0]">Puedes elegir más de uno · {services.length} opciones disponibles.</p>
+            <div className="mt-4 grid gap-3 sm:mt-5 sm:grid-cols-2">
               {services.map(service=>{
                 const selected=selectedIds.includes(service.id);
-                return <button type="button" key={service.id} role="checkbox" aria-checked={selected} onClick={()=>toggleService(service.id)} className={`group flex items-start gap-3 rounded-2xl border p-4 text-left transition-all duration-200 ${selected?'border-[#FED700] bg-[#FED700]/10':'border-[#C0C0C0]/15 bg-[#151515] hover:border-[#FED700]/60'}`}>
+                return <button type="button" key={service.id} role="checkbox" aria-checked={selected} onClick={()=>toggleService(service.id)} className={`group flex items-start gap-3 rounded-2xl border p-3.5 text-left sm:p-4 transition-all duration-200 ${selected?'border-[#FED700] bg-[#FED700]/10':'border-[#C0C0C0]/15 bg-[#151515] hover:border-[#FED700]/60'}`}>
                   <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-all duration-200 ${selected?'border-[#FED700] bg-[#FED700] text-[#111111]':'border-[#C0C0C0]/40 text-transparent'}`}><span className={`transition-transform duration-200 ${selected?'scale-100':'scale-0'}`}><Icon name="check" size={12}/></span></span>
                   <span className="min-w-0 flex-1">
                     <span className="flex items-start justify-between gap-3"><span className="font-bold text-white">{service.name}</span><span className="text-sm font-black text-[#FED700]">{service.price}</span></span>
@@ -230,7 +254,7 @@ export function BookingSection({services,onClose}:{services:Service[];onClose:()
           {step===1&&<div className="grid gap-6 md:grid-cols-2">
             <div id="bk-date">
               <h3 className="text-lg font-bold">Elige el día</h3>
-              <div className={`mt-4 rounded-2xl border bg-[#151515] p-3 transition-colors ${showError('date')?'border-[#D87000]':'border-[#C0C0C0]/20'}`}>
+              <div className={`mt-3 rounded-2xl border bg-[#151515] p-3 transition-colors ${showError('date')?'border-[#D87000]':'border-[#C0C0C0]/20'}`}>
                 <div className="flex items-center justify-between gap-3 px-1 pb-3">
                   <button type="button" aria-label="Mes anterior" disabled={!canGoPrevious} onClick={()=>setCalendarMonth(current=>new Date(current.getFullYear(),current.getMonth()-1,1,12))} className="flex h-10 w-10 items-center justify-center rounded-full border border-[#C0C0C0]/20 text-white transition-colors hover:border-[#FED700] disabled:cursor-not-allowed disabled:opacity-30"><span className="flex rotate-180"><Icon name="arrow" size={16}/></span></button>
                   <div className="text-sm font-bold capitalize text-white" aria-live="polite">{monthLabel}</div>
@@ -239,14 +263,14 @@ export function BookingSection({services,onClose}:{services:Service[];onClose:()
                 <div className="grid grid-cols-7 gap-1.5 text-center text-[10px] uppercase tracking-wider text-[#C0C0C0]">{['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'].map(day=><span key={day}>{day}</span>)}</div>
                 <div key={monthLabel} className="step-in mt-2 grid grid-cols-7 gap-1.5">
                   {calendarDays.map((day,index)=>{
-                    if(day===null) return <span key={`empty-${index}`} className="h-10"/>;
+                    if(day===null) return <span key={`empty-${index}`} className="h-9 sm:h-10"/>;
                     const cell=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth(),day,12);
                     const key=dateKeyOf(cell);
                     const isToday=key===todayKey;
                     const disabled=key<todayKey||(isToday&&slotsFor(key,now).every(slot=>slot.disabled));
                     const selected=date===key;
                     const sunday=cell.getDay()===0;
-                    return <button type="button" key={key} disabled={disabled} aria-pressed={selected} onClick={()=>{setDate(key);setTime('')}} className={`relative h-10 rounded-xl border text-xs transition-colors ${selected?'border-[#FED700] bg-[#FED700] font-bold text-[#111111]':disabled?'cursor-not-allowed border-transparent text-white/20':`border-[#C0C0C0]/20 bg-[#111111] hover:border-[#FED700] ${sunday?'text-[#D87000]':'text-white'}`}`}>
+                    return <button type="button" key={key} disabled={disabled} aria-pressed={selected} onClick={()=>{setDate(key);setTime('')}} className={`relative h-9 rounded-xl border text-xs sm:h-10 transition-colors ${selected?'border-[#FED700] bg-[#FED700] font-bold text-[#111111]':disabled?'cursor-not-allowed border-transparent text-white/20':`border-[#C0C0C0]/20 bg-[#111111] hover:border-[#FED700] ${sunday?'text-[#D87000]':'text-white'}`}`}>
                       {day}
                       {isToday&&<span className={`absolute bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full ${selected?'bg-[#111111]':'bg-[#FED700]'}`}/>}
                     </button>;
@@ -260,9 +284,9 @@ export function BookingSection({services,onClose}:{services:Service[];onClose:()
               {fieldError('date')}
             </div>
 
-            <div id="bk-time">
+            <div id="bk-time" className="scroll-mt-2">
               <h3 className="text-lg font-bold">Elige la hora</h3>
-              {!date?<div className="mt-4 flex min-h-[200px] items-center justify-center rounded-2xl border border-dashed border-[#C0C0C0]/20 p-6 text-center text-sm text-[#C0C0C0]">Selecciona un día para ver los horarios disponibles.</div>
+              {!date?<div className="mt-3 flex min-h-[88px] items-center justify-center rounded-2xl border border-dashed border-[#C0C0C0]/20 p-4 text-center text-sm text-[#C0C0C0] opacity-70 md:mt-4 md:min-h-[200px] md:p-6">Elige un día para ver los horarios disponibles.</div>
               :<div className="mt-4 space-y-5">
                 <p className="text-sm text-[#FED700]">{prettyDate}</p>
                 {isSunday&&<p className="rounded-xl border border-[#D87000]/40 bg-[#D87000]/10 px-3 py-2 text-xs text-[#ffb27a]">Los domingos atendemos con horario reducido: de 9:00 a. m. a 2:00 p. m.</p>}
@@ -309,17 +333,22 @@ export function BookingSection({services,onClose}:{services:Service[];onClose:()
           </div>}
         </div>}
       </div>
+      {!sent&&moreBelow&&<div className="pointer-events-none absolute inset-x-0 bottom-0 flex h-20 items-end justify-center bg-gradient-to-t from-[#111111] via-[#111111]/80 to-transparent pb-3 md:hidden">
+        <button type="button" onClick={scrollDown} className="pointer-events-auto inline-flex animate-bounce items-center gap-1.5 rounded-full border border-[#FED700]/50 bg-[#111111] px-4 py-2 text-xs font-bold uppercase tracking-widest text-[#FED700] shadow-lg">{moreLabel}<span className="rotate-90 flex"><Icon name="arrow" size={14}/></span></button>
+      </div>}
+      </div>
 
-      {!sent&&<footer className="shrink-0 border-t border-white/10 bg-[#0d0d0d] px-5 py-4 md:px-8">
+      {!sent&&<footer className="shrink-0 border-t border-white/10 bg-[#0d0d0d] px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 sm:px-5 sm:py-4 md:px-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0 text-sm">
             <div>{selectedServices.length>0?<><span className="text-[#C0C0C0]">{selectedServices.length} servicio{selectedServices.length>1?'s':''} · </span><strong className="text-[#FED700]">${totalPrice.toLocaleString('es-MX')}</strong></>:<span className="text-[#C0C0C0]">Aún no eliges servicios</span>}</div>
             {date&&<div className="mt-0.5 truncate text-xs text-[#C0C0C0]">{shortDate}{time?` · ${time}`:''}</div>}
+            {firstError&&<div className="mt-0.5 text-xs text-[#ffb27a] sm:hidden">{MISSING_LABEL[firstError]}</div>}
           </div>
           <div className="flex items-center gap-3">
             {step>0&&<button type="button" onClick={()=>changeStep(step-1)} className="inline-flex h-12 items-center gap-2 rounded-full border border-[#C0C0C0]/25 px-5 text-xs font-bold uppercase tracking-widest transition-colors hover:border-[#FED700] hover:text-[#FED700]"><span className="flex rotate-180"><Icon name="arrow" size={16}/></span>Atrás</button>}
             <button type="button" onClick={handlePrimary} aria-disabled={Boolean(firstError)} className={`inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-full px-6 text-xs font-black uppercase tracking-widest transition-colors sm:flex-none ${firstError?'cursor-not-allowed bg-white/10 text-white/50':'bg-[#FED700] text-[#111111] shadow-lg shadow-[#FED700]/20 hover:bg-[#D87000]'}`}>
-              {firstError?MISSING_LABEL[firstError]:isLast?<><Icon name="whatsapp" size={18}/> Enviar por WhatsApp</>:<>Continuar <Icon name="arrow" size={16}/></>}
+              {firstError?<><span className="sm:hidden">{isLast?'Enviar':'Continuar'}</span><span className="hidden sm:inline">{MISSING_LABEL[firstError]}</span></>:isLast?<><Icon name="whatsapp" size={18}/> Enviar por WhatsApp</>:<>Continuar <Icon name="arrow" size={16}/></>}
             </button>
           </div>
         </div>

@@ -1,9 +1,9 @@
-export const WHATSAPP_NUMBER = '529994845979';
+export const WHATSAPP_NUMBER = '529999041836';
 export const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}`;
 export const INSTAGRAM_URL = 'https://www.instagram.com/hunterbarbershop_/';
 export const FACEBOOK_URL = 'https://www.facebook.com/profile.php?id=61582343666473&locale=es_LA';
 export const MAPS_URL = 'https://maps.app.goo.gl/fmKfpriT696j39Nq6';
-export const REVIEW_URL = 'https://search.google.com/local/writereview?placeid=ChIJ74gwQgCyUo8R9CIKPFMlI6U';
+export const REVIEW_URL = 'https://share.google/Z8Io1sZmGe6QWfq8d';
 
 export const GOOGLE_RATING = { score: 5, count: 16 } as const;
 
