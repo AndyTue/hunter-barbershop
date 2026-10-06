@@ -18,7 +18,7 @@ export function Hero({ onBook }: { onBook: () => void }) {
           <div className="absolute bottom-8 md:bottom-12 inset-x-0 flex flex-col items-center gap-4 px-4">
             <div className="hero-socials flex items-center justify-center gap-6">
               {SOCIAL_LINKS.map(({ label, icon, href }) => (
-                <a key={label} href={href} target="_blank" rel="noreferrer" aria-label={label} className="text-[#FED700] hover:text-white hover:scale-110 transition-all duration-300"><Icon name={icon} size={26} /></a>
+                <a key={label} href={href} target="_blank" rel="noreferrer" aria-label={label} className="text-[#00000] hover:text-white hover:scale-110 transition-all duration-300"><Icon name={icon} size={26} /></a>
               ))}
             </div>
             <div className="hero-cta">

@@ -1,6 +1,5 @@
 export type Review = { author: string; rating: number; date: string; comment: string };
 
-// Las fechas son aproximadas (calculadas a partir de "hace X" al copiar las reseñas de Google el 2026-10-02).
 export const REVIEWS: Review[] = [
   { author: 'Alejandro Lopez Uicab', rating: 5, date: '2026-09-02', comment: 'La atención, los cortes, la limpieza del lugar y la higiene son excelentes. Muy recomendado.' },
   { author: 'Luis Gerardo Cruz Rodriguez', rating: 5, date: '2026-09-25', comment: 'Excelente atención, buen servicio y muy profesional, 100% recomendado.' },

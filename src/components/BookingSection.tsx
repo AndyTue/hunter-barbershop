@@ -327,7 +327,7 @@ export function BookingSection({services,onClose}:{services:Service[];onClose:()
                 <div className="flex justify-between gap-3"><span>Fecha</span><span className="font-bold text-white">{shortDate}</span></div>
                 <div className="flex justify-between gap-3"><span>Hora</span><span className="font-bold text-white">{time}</span></div>
               </div>
-              <div className="mt-4 flex justify-between gap-3 border-t border-white/10 pt-4"><span className="text-[#C0C0C0]">Total estimado</span><span className="text-lg font-black text-[#FED700]">${totalPrice.toLocaleString('es-MX')}</span></div>
+              <div className="mt-4 flex justify-between gap-3 border-t border-white/10 pt-4"><span className="text-[#C0C0C0]">Total</span><span className="text-lg font-black text-[#FED700]">${totalPrice.toLocaleString('es-MX')}</span></div>
               <p className="mt-4 text-xs leading-relaxed text-[#C0C0C0]">Al enviar se abrirá WhatsApp con tu solicitud. La cita queda confirmada cuando te respondamos.</p>
             </aside>
           </div>}

@@ -6,7 +6,7 @@ export function ServicesSection({ onBook }: { onBook: () => void }) {
     <section id="servicios" className="w-full py-20 px-4 md:px-8 bg-[#111111]">
       <div className="max-w-7xl mx-auto">
         <div className="reveal mb-10">
-          <div className="text-xs uppercase tracking-widest text-[#FED700] font-bold">Nuestros trabajos de maestría</div>
+          <div className="text-xs uppercase tracking-widest text-[#FED700] font-bold">Nuestros trabajos</div>
           <h2 className="mt-2 text-3xl md:text-5xl font-sauce-bold text-white">Servicios de Barbería</h2>
           <p className="mt-3 max-w-2xl text-[#C0C0C0] text-sm">Cada servicio está diseñado alrededor de una idea sencilla: precisión, ritual y un resultado que se note.</p>
         </div>
