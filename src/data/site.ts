@@ -5,7 +5,7 @@ export const FACEBOOK_URL = 'https://www.facebook.com/profile.php?id=61582343666
 export const MAPS_URL = 'https://maps.app.goo.gl/fmKfpriT696j39Nq6';
 export const REVIEW_URL = 'https://share.google/Z8Io1sZmGe6QWfq8d';
 
-export const GOOGLE_RATING = { score: 5, count: 16 } as const;
+export const GOOGLE_RATING = { score: 5, count: 17 } as const;
 
 export const SOCIAL_LINKS = [
   { label: 'WhatsApp', icon: 'whatsapp', href: WHATSAPP_URL },

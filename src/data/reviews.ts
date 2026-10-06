@@ -1,6 +1,7 @@
 export type Review = { author: string; rating: number; date: string; comment: string };
 
 export const REVIEWS: Review[] = [
+  { author: 'Amin Pacheco', rating: 5, date: '2026-10-05', comment: 'Una gran experiencia, se nota la dedicación en cada detalle y la atención fue de primera. Me gustó mucho el resultado, súper recomendado.' },
   { author: 'Alejandro Lopez Uicab', rating: 5, date: '2026-09-02', comment: 'La atención, los cortes, la limpieza del lugar y la higiene son excelentes. Muy recomendado.' },
   { author: 'Luis Gerardo Cruz Rodriguez', rating: 5, date: '2026-09-25', comment: 'Excelente atención, buen servicio y muy profesional, 100% recomendado.' },
   { author: 'Pamela Mendez', rating: 5, date: '2026-09-25', comment: 'Excelente servicio y atención, un lugar muy limpio y con la higiene adecuada, acudimos a corte para mis hijos y les quedó muy bien.' },
