@@ -6,6 +6,8 @@ import clasicoBarba from '../../images/clasico y barba .jpeg';
 import antesDespues from '../../images/antes y despues fade .jpeg';
 import mascarilla from '../../images/Mascarilla puntos negros.jpeg';
 import trenzas from '../../images/trenzas.jpeg';
+import corte from '../../images/corte.jpeg';
+
 
 export { default as GALLERY_VIDEO } from '../../images/video corte fade .mp4';
 
@@ -17,5 +19,6 @@ export const GALLERY = [
   [fade2, 'Fade en niños'],
   [fadeBarba2, 'Fade y barba definida'],
   [trenzas, 'Trenzas'],
+  [corte, 'Corte'],
   [mascarilla, 'Mascarilla de puntos negros']
 ] as const;
