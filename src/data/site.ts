@@ -25,11 +25,11 @@ export const NAV_ITEMS = [
 export const SECTION_IDS = ['inicio', 'servicios', 'nosotros', 'resenas', 'galeria', 'ubicacion', 'contacto'] as const;
 
 export const OPENING_HOURS = [
-  ['Lunes', '9 a.m.–10 p.m.'],
-  ['Martes', '9 a.m.–10 p.m.'],
-  ['Miércoles', '9 a.m.–10 p.m.'],
-  ['Jueves', '9 a.m.–10 p.m.'],
-  ['Viernes', '9 a.m.–10 p.m.'],
-  ['Sábado', '9 a.m.–10 p.m.'],
-  ['Domingo', '9 a.m.–2 p.m.']
+  ['Lunes', '9 a.m. – 10 p.m.'],
+  ['Martes', '9 a.m. – 10 p.m.'],
+  ['Miércoles', '9 a.m. – 10 p.m.'],
+  ['Jueves', '9 a.m. – 10 p.m.'],
+  ['Viernes', '9 a.m. – 10 p.m.'],
+  ['Sábado', '9 a.m. – 10 p.m.'],
+  ['Domingo', '9 a.m. – 6 p.m.']
 ] as const;

@@ -19,7 +19,10 @@ export function ServicesSection({ onBook }: { onBook: () => void }) {
                 <p className="text-xs md:text-sm text-[#C0C0C0] mt-3 leading-relaxed">{s.description}</p>
               </div>
               <div className="pt-6 flex items-end justify-between gap-3">
-                <div className="text-lg font-black text-[#FED700] origin-left group-hover:scale-110 transition-transform duration-300">{s.price}</div>
+                <div className="origin-left group-hover:scale-110 transition-transform duration-300">
+                  {s.from&&<div className="text-[10px] font-bold uppercase tracking-widest text-[#C0C0C0]">A partir de:</div>}
+                  <div className="text-lg font-black text-[#FED700]">{s.price}</div>
+                </div>
                 <button onClick={onBook} className="px-4 py-2 rounded-full border border-[#C0C0C0]/25 hover:border-[#FED700] hover:bg-[#FED700] hover:text-[#111111] text-[10px] font-bold uppercase tracking-widest transition-colors">Reservar</button>
               </div>
             </article>

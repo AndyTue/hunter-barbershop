@@ -4,10 +4,12 @@ import { WHATSAPP_URL } from '../data/site';
 import type { Service } from '../data/services';
 import { capitalize } from '../lib/format';
 
-type Field='services'|'date'|'time'|'name'|'phone';
-const STEPS=['Servicios','Fecha y hora','Tus datos'] as const;
-const STEP_FIELDS:Field[][]=[['services'],['date','time'],['name','phone']];
-const MISSING_LABEL:Record<Field,string>={services:'Elige un servicio',date:'Elige una fecha',time:'Elige un horario',name:'Escribe tu nombre',phone:'Escribe tu teléfono'};
+type Field='mode'|'services'|'date'|'time'|'name'|'phone'|'address';
+type Mode='shop'|'home';
+const STEPS=['Modalidad','Servicios','Fecha y hora','Tus datos'] as const;
+const STEP_FIELDS:Field[][]=[['mode'],['services'],['date','time'],['name','phone','address']];
+const HOME_PRICE_NOTE='El costo del servicio a domicilio se acuerda con el barbero por mensaje, según la ubicación y los servicios que elijas.';
+const MISSING_LABEL:Record<Field,string>={mode:'Elige una modalidad',address:'Escribe tu dirección',services:'Elige un servicio',date:'Elige una fecha',time:'Elige un horario',name:'Escribe tu nombre',phone:'Escribe tu teléfono'};
 const pad2=(n:number)=>String(n).padStart(2,'0');
 const dateKeyOf=(d:Date)=>`${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
 const hourLabel=(h:number)=>`${h%12===0?12:h%12}:00 ${h<12?'a. m.':'p. m.'}`;
@@ -16,7 +18,7 @@ const formatPhone=(raw:string)=>{
   return [d.slice(0,3),d.slice(3,6),d.slice(6,10)].filter(Boolean).join(' ');
 };
 const slotsFor=(key:string,now:Date)=>{
-  const last=new Date(`${key}T12:00:00`).getDay()===0?14:21;
+  const last=new Date(`${key}T12:00:00`).getDay()===0?18:21;
   const isToday=key===dateKeyOf(now);
   const nowMin=now.getHours()*60+now.getMinutes();
   return Array.from({length:last-9+1},(_,i)=>{
@@ -31,6 +33,8 @@ export function BookingSection({services,onClose}:{services:Service[];onClose:()
   const [step,setStep]=useState(0);
   const [sent,setSent]=useState(false);
   const [waUrl,setWaUrl]=useState('');
+  const [mode,setMode]=useState<Mode|''>('');
+  const [address,setAddress]=useState('');
   const [selectedIds,setSelectedIds]=useState<string[]>([]);
   const [date,setDate]=useState('');
   const [time,setTime]=useState('');
@@ -53,6 +57,8 @@ export function BookingSection({services,onClose}:{services:Service[];onClose:()
   const canGoPrevious=monthStart.getFullYear()*12+monthStart.getMonth()>now.getFullYear()*12+now.getMonth();
   const monthLabel=calendarMonth.toLocaleDateString('es-MX',{month:'long',year:'numeric'});
   const selectedServices=services.filter(service=>selectedIds.includes(service.id));
+  const isHome=mode==='home';
+  const hasFrom=!isHome&&selectedServices.some(service=>service.from);
   const totalPrice=selectedServices.reduce((total,service)=>total+(Number(service.price.replace(/[^0-9]/g,''))||0),0);
   const selectedDate=date?new Date(`${date}T12:00:00`):null;
   const isSunday=selectedDate?.getDay()===0;
@@ -64,6 +70,8 @@ export function BookingSection({services,onClose}:{services:Service[];onClose:()
   const shortDate=selectedDate?capitalize(selectedDate.toLocaleDateString('es-MX',{weekday:'short',day:'numeric',month:'short'})):'';
 
   const errors:Record<Field,string>={
+    mode:!mode?'Elige cómo quieres tu servicio.':'',
+    address:isHome&&address.trim().length<8?'Escribe tu dirección completa (calle, número y colonia).':'',
     services:selectedServices.length===0?'Elige al menos un servicio.':'',
     date:!date?'Elige una fecha.':'',
     time:!time?'Elige un horario.':slots.some(slot=>slot.label===time&&!slot.disabled)?'':'Ese horario ya no está disponible.',
@@ -118,7 +126,7 @@ export function BookingSection({services,onClose}:{services:Service[];onClose:()
   },[date]);
 
   const scrollDown=()=>bodyRef.current?.scrollBy({top:bodyRef.current.clientHeight*0.7,behavior:'smooth'});
-  const moreLabel=step===0?'Ver más servicios':step===1?(date?'Ver más horarios':'Ver horarios'):'Ver más';
+  const moreLabel=step===1?'Ver más servicios':step===2?(date?'Ver más horarios':'Ver horarios'):'Ver más';
 
   const toggleService=(id:string)=>setSelectedIds(current=>current.includes(id)?current.filter(item=>item!==id):[...current,id]);
 
@@ -139,21 +147,23 @@ export function BookingSection({services,onClose}:{services:Service[];onClose:()
   };
 
   const submitBooking=()=>{
-    const serviceSummary=selectedServices.map(service=>`${service.name} (${service.price})`).join(', ');
+    const serviceSummary=selectedServices.map(service=>isHome?service.name:`${service.name} (${service.from?'a partir de ':''}${service.price})`).join(', ');
     const message=[
       'Buen día, equipo de *Hunter BarberShop*.',
       '',
       `Mi nombre es ${name.trim()} y me gustaría solicitar una cita con los siguientes datos:`,
       '',
-      '*SOLICITUD DE CITA*',
+      isHome?'*SOLICITUD DE CITA — SERVICIO A DOMICILIO*':'*SOLICITUD DE CITA*',
       `*Servicios:* ${serviceSummary}`,
-      `*Total estimado:* $${totalPrice.toLocaleString('es-MX')} MXN`,
+      isHome?`*Dirección:* ${address.trim()}`:'',
+      isHome?'*Total:* Por cotizar (se acuerda por mensaje según ubicación y servicios)':`*Total estimado:* ${hasFrom?'a partir de ':''}$${totalPrice.toLocaleString('es-MX')} MXN`,
+      hasFrom?'*Nota:* El precio final de Rizos/Trenzas se confirma con el barbero.':'',
       `*Fecha:* ${prettyDate}`,
       `*Horario:* ${time}`,
       `*Teléfono de contacto:* ${formatPhone(customerPhone)}`,
       notes.trim()?`*Notas:* ${notes.trim()}`:'',
       '',
-      '¿Me podrían confirmar la disponibilidad? Quedo atento(a). Muchas gracias.'
+      isHome?'¿Me podrían confirmar la disponibilidad y cotizar el servicio a domicilio? Quedo atento(a). Muchas gracias.':'¿Me podrían confirmar la disponibilidad? Quedo atento(a). Muchas gracias.'
     ].filter((line,i,arr)=>line!==''||(arr[i-1]!==''&&i>0)).join('\n');
     const url=`${WHATSAPP_URL}?text=${encodeURIComponent(message)}`;
     window.open(url,'_blank','noopener,noreferrer');
@@ -168,7 +178,7 @@ export function BookingSection({services,onClose}:{services:Service[];onClose:()
       requestAnimationFrame(()=>{
         const el=document.getElementById(`bk-${firstError}`);
         el?.scrollIntoView({block:'center',behavior:'smooth'});
-        if(el instanceof HTMLInputElement) el.focus({preventScroll:true});
+        if(el instanceof HTMLInputElement||el instanceof HTMLTextAreaElement) el.focus({preventScroll:true});
       });
       return;
     }
@@ -221,10 +231,14 @@ export function BookingSection({services,onClose}:{services:Service[];onClose:()
           <h3 className="mt-6 text-2xl font-sauce-bold md:text-3xl">¡Solicitud enviada!</h3>
           <p className="mt-3 text-sm leading-relaxed text-[#C0C0C0]">Se abrió WhatsApp con los datos de tu cita. Tu horario queda confirmado cuando recibas nuestra respuesta.</p>
           <div className="mt-6 w-full rounded-2xl border border-[#C0C0C0]/15 bg-[#151515] p-5 text-left text-sm">
-            <div className="flex justify-between gap-4"><span className="text-[#C0C0C0]">Servicios</span><span className="text-right font-bold">{selectedServices.map(service=>service.name).join(', ')}</span></div>
+            <div className="flex justify-between gap-4"><span className="text-[#C0C0C0]">Modalidad</span><span className="text-right font-bold">{isHome?'A domicilio':'En la barbería'}</span></div>
+            {isHome&&<div className="mt-3 flex justify-between gap-4"><span className="text-[#C0C0C0]">Dirección</span><span className="text-right font-bold break-words">{address.trim()}</span></div>}
+            <div className="mt-3 flex justify-between gap-4"><span className="text-[#C0C0C0]">Servicios</span><span className="text-right font-bold">{selectedServices.map(service=>service.name).join(', ')}</span></div>
             <div className="mt-3 flex justify-between gap-4"><span className="text-[#C0C0C0]">Fecha</span><span className="text-right font-bold">{shortDate}</span></div>
             <div className="mt-3 flex justify-between gap-4"><span className="text-[#C0C0C0]">Hora</span><span className="text-right font-bold">{time}</span></div>
-            <div className="mt-4 flex justify-between gap-4 border-t border-white/10 pt-4"><span className="text-[#C0C0C0]">Total estimado</span><span className="font-black text-[#FED700]">${totalPrice.toLocaleString('es-MX')}</span></div>
+            <div className="mt-4 flex justify-between gap-4 border-t border-white/10 pt-4"><span className="text-[#C0C0C0]">{isHome?'Total':`Total estimado${hasFrom?' a partir de':''}`}</span><span className="font-black text-[#FED700]">{isHome?'Por cotizar':`$${totalPrice.toLocaleString('es-MX')}`}</span></div>
+            {isHome&&<p className="mt-3 text-xs leading-relaxed text-[#ffb27a]">{HOME_PRICE_NOTE}</p>}
+            {hasFrom&&<p className="mt-3 text-xs leading-relaxed text-[#ffb27a]">El precio final se verifica con el barbero antes del servicio.</p>}
           </div>
           <div className="mt-6 flex w-full flex-col gap-3 sm:flex-row">
             <a href={waUrl} target="_blank" rel="noreferrer" className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-[#C0C0C0]/25 px-6 py-3.5 text-xs font-bold uppercase tracking-widest transition-colors hover:border-[#FED700] hover:text-[#FED700]"><Icon name="whatsapp" size={18}/> Abrir WhatsApp</a>
@@ -233,16 +247,32 @@ export function BookingSection({services,onClose}:{services:Service[];onClose:()
         </div>
 
         :<div key={step} className="step-in">
-          {step===0&&<div id="bk-services" aria-describedby="bk-services-err">
+          {step===0&&<div id="bk-mode">
+            <h3 className="text-lg font-bold">¿Dónde quieres tu servicio?</h3>
+            <p className="mt-1 text-sm text-[#C0C0C0]">Elige cómo prefieres atenderte.</p>
+            <div role="radiogroup" aria-label="Modalidad del servicio" className="mt-4 grid gap-3 sm:mt-5 sm:grid-cols-2">
+              {([['shop','En la barbería','Ven a Hunter BarberShop y reserva tu horario.'],['home','A domicilio','Vamos a donde estés. El precio se acuerda por mensaje con el barbero.']] as const).map(([value,title,text])=>{
+                const selected=mode===value;
+                return <button type="button" key={value} role="radio" aria-checked={selected} onClick={()=>setMode(value)} className={`flex items-start gap-3 rounded-2xl border p-4 text-left transition-all duration-200 sm:p-5 ${selected?'border-[#FED700] bg-[#FED700]/10':'border-[#C0C0C0]/15 bg-[#151515] hover:border-[#FED700]/60'}`}>
+                  <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-all duration-200 ${selected?'border-[#FED700] bg-[#FED700] text-[#111111]':'border-[#C0C0C0]/40 text-transparent'}`}><Icon name="check" size={12}/></span>
+                  <span><span className="block font-bold text-white">{title}</span><span className="mt-1.5 block text-xs leading-relaxed text-[#C0C0C0]">{text}</span></span>
+                </button>;
+              })}
+            </div>
+            {fieldError('mode')}
+          </div>}
+
+          {step===1&&<div id="bk-services" aria-describedby="bk-services-err">
             <h3 className="text-lg font-bold">¿Qué servicios necesitas?</h3>
             <p className="mt-1 text-sm text-[#C0C0C0]">Puedes elegir más de uno · {services.length} opciones disponibles.</p>
+            {isHome&&<p className="mt-3 rounded-xl border border-[#D87000]/40 bg-[#D87000]/10 px-3 py-2 text-xs leading-relaxed text-[#ffb27a]">{HOME_PRICE_NOTE}</p>}
             <div className="mt-4 grid gap-3 sm:mt-5 sm:grid-cols-2">
               {services.map(service=>{
                 const selected=selectedIds.includes(service.id);
                 return <button type="button" key={service.id} role="checkbox" aria-checked={selected} onClick={()=>toggleService(service.id)} className={`group flex items-start gap-3 rounded-2xl border p-3.5 text-left sm:p-4 transition-all duration-200 ${selected?'border-[#FED700] bg-[#FED700]/10':'border-[#C0C0C0]/15 bg-[#151515] hover:border-[#FED700]/60'}`}>
                   <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-all duration-200 ${selected?'border-[#FED700] bg-[#FED700] text-[#111111]':'border-[#C0C0C0]/40 text-transparent'}`}><span className={`transition-transform duration-200 ${selected?'scale-100':'scale-0'}`}><Icon name="check" size={12}/></span></span>
                   <span className="min-w-0 flex-1">
-                    <span className="flex items-start justify-between gap-3"><span className="font-bold text-white">{service.name}</span><span className="text-sm font-black text-[#FED700]">{service.price}</span></span>
+                    <span className="flex items-start justify-between gap-3"><span className="font-bold text-white">{service.name}</span>{!isHome&&<span className="shrink-0 text-right">{service.from&&<span className="block text-[10px] font-bold uppercase tracking-widest text-[#C0C0C0]">A partir de:</span>}<span className="text-sm font-black text-[#FED700]">{service.price}</span></span>}</span>
                     <span className="mt-1.5 line-clamp-2 block text-xs leading-relaxed text-[#C0C0C0]">{service.description}</span>
                   </span>
                 </button>;
@@ -251,7 +281,7 @@ export function BookingSection({services,onClose}:{services:Service[];onClose:()
             {fieldError('services')}
           </div>}
 
-          {step===1&&<div className="grid gap-6 md:grid-cols-2">
+          {step===2&&<div className="grid gap-6 md:grid-cols-2">
             <div id="bk-date">
               <h3 className="text-lg font-bold">Elige el día</h3>
               <div className={`mt-3 rounded-2xl border bg-[#151515] p-3 transition-colors ${showError('date')?'border-[#D87000]':'border-[#C0C0C0]/20'}`}>
@@ -278,7 +308,7 @@ export function BookingSection({services,onClose}:{services:Service[];onClose:()
                 </div>
                 <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 px-1 text-[11px] text-[#C0C0C0]">
                   <span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-[#FED700]"/>Hoy</span>
-                  <span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-[#D87000]"/>Domingo: 9 a. m. – 2 p. m.</span>
+                  <span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-[#D87000]"/>Domingo: 9 a. m. – 6 p. m.</span>
                 </div>
               </div>
               {fieldError('date')}
@@ -289,7 +319,8 @@ export function BookingSection({services,onClose}:{services:Service[];onClose:()
               {!date?<div className="mt-3 flex min-h-[88px] items-center justify-center rounded-2xl border border-dashed border-[#C0C0C0]/20 p-4 text-center text-sm text-[#C0C0C0] opacity-70 md:mt-4 md:min-h-[200px] md:p-6">Elige un día para ver los horarios disponibles.</div>
               :<div className="mt-4 space-y-5">
                 <p className="text-sm text-[#FED700]">{prettyDate}</p>
-                {isSunday&&<p className="rounded-xl border border-[#D87000]/40 bg-[#D87000]/10 px-3 py-2 text-xs text-[#ffb27a]">Los domingos atendemos con horario reducido: de 9:00 a. m. a 2:00 p. m.</p>}
+                {isHome&&<p className="rounded-xl border border-[#D87000]/40 bg-[#D87000]/10 px-3 py-2 text-xs text-[#ffb27a]">La hora se confirma por WhatsApp según el traslado del barbero.</p>}
+                {isSunday&&<p className="rounded-xl border border-[#D87000]/40 bg-[#D87000]/10 px-3 py-2 text-xs text-[#ffb27a]">Los domingos atendemos con horario reducido: de 9:00 a. m. a 6:00 p. m.</p>}
                 {[['Mañana',morning],['Tarde',afternoon]].map(([label,list])=>(list as typeof slots).length>0&&<div key={label as string}>
                   <div className="mb-2 text-[11px] uppercase tracking-widest text-[#C0C0C0]">{label as string}</div>
                   <div className="grid grid-cols-3 gap-2">
@@ -302,7 +333,7 @@ export function BookingSection({services,onClose}:{services:Service[];onClose:()
             </div>
           </div>}
 
-          {step===2&&<div className="grid gap-6 md:grid-cols-[1.1fr_.9fr]">
+          {step===3&&<div className="grid gap-6 md:grid-cols-[1.1fr_.9fr]">
             <div className="space-y-5">
               <h3 className="text-lg font-bold">¿A nombre de quién?</h3>
               <div>
@@ -315,6 +346,11 @@ export function BookingSection({services,onClose}:{services:Service[];onClose:()
                 <input id="bk-phone" value={customerPhone} onChange={event=>setCustomerPhone(formatPhone(event.target.value))} onBlur={()=>touch('phone')} type="tel" inputMode="tel" autoComplete="tel-national" placeholder="999 000 0000" aria-invalid={showError('phone')} aria-describedby={showError('phone')?'bk-phone-err':undefined} className={fieldClass('phone')}/>
                 {fieldError('phone')}
               </div>
+              {isHome&&<div>
+                <label htmlFor="bk-address" className="text-sm text-[#C0C0C0]">Dirección del servicio</label>
+                <textarea id="bk-address" value={address} onChange={event=>setAddress(event.target.value)} onBlur={()=>touch('address')} rows={3} autoComplete="street-address" placeholder="Calle, número, colonia y referencias" aria-invalid={showError('address')} aria-describedby={showError('address')?'bk-address-err':undefined} className={`${fieldClass('address')} resize-none`}/>
+                {fieldError('address')}
+              </div>}
               <div>
                 <label htmlFor="bk-notes" className="text-sm text-[#C0C0C0]">Notas <span className="text-white/40">(opcional)</span></label>
                 <textarea id="bk-notes" value={notes} onChange={event=>setNotes(event.target.value)} rows={3} placeholder="Alguna preferencia o detalle" className="mt-2 w-full resize-none rounded-xl border border-[#C0C0C0]/20 bg-[#111111] px-4 py-3 text-white outline-none transition-colors placeholder:text-white/35 focus:border-[#FED700]"/>
@@ -322,12 +358,15 @@ export function BookingSection({services,onClose}:{services:Service[];onClose:()
             </div>
             <aside className="h-fit rounded-2xl border border-[#C0C0C0]/15 bg-[#151515] p-5 text-sm">
               <div className="text-xs font-bold uppercase tracking-widest text-[#FED700]">Resumen</div>
-              <ul className="mt-4 space-y-2">{selectedServices.map(service=><li key={service.id} className="flex justify-between gap-3"><span>{service.name}</span><span className="font-bold text-[#FED700]">{service.price}</span></li>)}</ul>
+              <ul className="mt-4 space-y-2">{selectedServices.map(service=><li key={service.id} className="flex flex-wrap justify-between gap-x-3"><span>{service.name}</span>{!isHome&&<span className="text-right font-bold text-[#FED700]">{service.from&&<span className="block text-[10px] font-bold uppercase tracking-widest text-[#C0C0C0]">A partir de:</span>}{service.price}</span>}{!isHome&&service.from&&<span className="basis-full text-[11px] text-[#ffb27a]">Precio sujeto a cambio</span>}</li>)}</ul>
               <div className="mt-4 space-y-2 border-t border-white/10 pt-4 text-[#C0C0C0]">
+                <div className="flex justify-between gap-3"><span>Modalidad</span><span className="font-bold text-white">{isHome?'A domicilio':'En la barbería'}</span></div>
                 <div className="flex justify-between gap-3"><span>Fecha</span><span className="font-bold text-white">{shortDate}</span></div>
                 <div className="flex justify-between gap-3"><span>Hora</span><span className="font-bold text-white">{time}</span></div>
               </div>
-              <div className="mt-4 flex justify-between gap-3 border-t border-white/10 pt-4"><span className="text-[#C0C0C0]">Total</span><span className="text-lg font-black text-[#FED700]">${totalPrice.toLocaleString('es-MX')}</span></div>
+              <div className="mt-4 flex justify-between gap-3 border-t border-white/10 pt-4"><span className="text-[#C0C0C0]">{isHome?'Total':`Total${hasFrom?' a partir de':''}`}</span><span className="text-lg font-black text-[#FED700]">{isHome?'Por cotizar':`$${totalPrice.toLocaleString('es-MX')}`}</span></div>
+              {isHome&&<p className="mt-3 rounded-xl border border-[#D87000]/40 bg-[#D87000]/10 px-3 py-2 text-xs leading-relaxed text-[#ffb27a]">{HOME_PRICE_NOTE}</p>}
+              {hasFrom&&<p className="mt-3 rounded-xl border border-[#D87000]/40 bg-[#D87000]/10 px-3 py-2 text-xs leading-relaxed text-[#ffb27a]">El precio de Rizos y Trenzas es base: el costo final se verifica con el barbero antes del servicio.</p>}
               <p className="mt-4 text-xs leading-relaxed text-[#C0C0C0]">Al enviar se abrirá WhatsApp con tu solicitud. La cita queda confirmada cuando te respondamos.</p>
             </aside>
           </div>}
@@ -341,7 +380,7 @@ export function BookingSection({services,onClose}:{services:Service[];onClose:()
       {!sent&&<footer className="shrink-0 border-t border-white/10 bg-[#0d0d0d] px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 sm:px-5 sm:py-4 md:px-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0 text-sm">
-            <div>{selectedServices.length>0?<><span className="text-[#C0C0C0]">{selectedServices.length} servicio{selectedServices.length>1?'s':''} · </span><strong className="text-[#FED700]">${totalPrice.toLocaleString('es-MX')}</strong></>:<span className="text-[#C0C0C0]">Aún no eliges servicios</span>}</div>
+            <div>{selectedServices.length>0?<><span className="text-[#C0C0C0]">{selectedServices.length} servicio{selectedServices.length>1?'s':''} · </span><strong className="text-[#FED700]">{isHome?'Por cotizar':`${hasFrom?'Desde ':''}$${totalPrice.toLocaleString('es-MX')}`}</strong></>:<span className="text-[#C0C0C0]">Aún no eliges servicios</span>}</div>
             {date&&<div className="mt-0.5 truncate text-xs text-[#C0C0C0]">{shortDate}{time?` · ${time}`:''}</div>}
             {firstError&&<div className="mt-0.5 text-xs text-[#ffb27a] sm:hidden">{MISSING_LABEL[firstError]}</div>}
           </div>
