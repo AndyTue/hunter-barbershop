@@ -23,7 +23,7 @@ const slotsFor=(key:string,now:Date)=>{
   const nowMin=now.getHours()*60+now.getMinutes();
   return Array.from({length:last-9+1},(_,i)=>{
     const hour=9+i;
-    return {hour,label:hourLabel(hour),disabled:isToday&&hour*60<nowMin+30};
+    return {hour,label:hourLabel(hour),disabled:isToday&&hour*60<nowMin+5};
   });
 };
 
